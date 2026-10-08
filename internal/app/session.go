@@ -1356,7 +1356,7 @@ func (m *OS) updateWindowFromState(w *terminal.Window, ws *session.WindowState) 
 		// interactive resize drag (which syncs sizes rapidly) never pays for a
 		// per-motion round-trip.
 		if m.ScriptMode && w.DaemonMode && w.PTYID != "" && m.DaemonClient != nil {
-			if state, err := m.DaemonClient.GetTerminalState(w.PTYID, 0, m.snapshotHave(w)); err == nil && state != nil {
+			if state, err := m.DaemonClient.GetTerminalState(w.PTYID, m.SnapshotScrollback, m.snapshotHave(w)); err == nil && state != nil {
 				m.restoreTerminalContent(w, state)
 			}
 			w.HasNewOutput.Store(true)
@@ -1742,7 +1742,7 @@ func (m *OS) RestoreTerminalStates() error {
 
 	for _, w := range m.Windows {
 		if w.DaemonMode && w.PTYID != "" {
-			state, err := m.DaemonClient.GetTerminalState(w.PTYID, 0, m.snapshotHave(w))
+			state, err := m.DaemonClient.GetTerminalState(w.PTYID, m.SnapshotScrollback, m.snapshotHave(w))
 			if err != nil {
 				m.LogError("Failed to get terminal state for PTY %s: %v", shortID(w.PTYID), err)
 				continue
@@ -1997,7 +1997,7 @@ func (m *OS) primePaneFromDaemon(window *terminal.Window) {
 	// snapshot's window, and the screen at the end.
 	window.DrainPendingOutput()
 
-	state, err := m.DaemonClient.GetTerminalState(window.PTYID, 0, m.snapshotHave(window))
+	state, err := m.DaemonClient.GetTerminalState(window.PTYID, m.SnapshotScrollback, m.snapshotHave(window))
 	if err != nil || state == nil {
 		m.subscribeToPTY(window, 0)
 		return
@@ -2014,7 +2014,7 @@ func (m *OS) primePaneFromDaemon(window *terminal.Window) {
 	if state.Width != window.ContentWidth() || state.Height != window.ContentHeight() {
 		window.SeedAnnouncedSize(state.Width, state.Height)
 		window.Resize(window.Width, window.Height)
-		if fresh, err := m.DaemonClient.GetTerminalState(window.PTYID, 0, m.snapshotHave(window)); err == nil && fresh != nil {
+		if fresh, err := m.DaemonClient.GetTerminalState(window.PTYID, m.SnapshotScrollback, m.snapshotHave(window)); err == nil && fresh != nil {
 			state = fresh
 		}
 	}
