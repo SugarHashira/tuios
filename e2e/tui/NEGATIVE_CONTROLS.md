@@ -5048,3 +5048,12 @@ Run on 2026-10-14 on Linux. The preview's frame is the panes' border glyphs, and
 | The tint on the frame's cells when the zone is filled | `TestDropPreviewFillWashesTheZone`, `TestADropOnAPaneEdgeSplitsIt/left` and `/sibling-left` ("outline cell (0,0) ... has ground {Kind:0 ...}, want the tint"); the outline case passes | **caught** |
 
 The 16-colour reverse frame is unchanged by this work and keeps its row in the table above (`TestTheDropZoneShowsAt16Colours`). The edge-zone guard now splits at the tree's own ratio; no test here makes a tree whose new splits start away from 0.5, so that change has no control.
+### kitty image numbers (#644)
+
+Run on 2026-10-12 on branch `fix/kitty-image-numbers`. The control cuts one
+thing from the fixed build and runs `TestKittyImageNumbers`. The test also
+fails on origin/main with the same messages.
+
+| Control: what was cut | Tests that fail | Verdict |
+| --- | --- | --- |
+| The `resolveImageNumber` call in `ForwardCommand` (I= reaches the host as the guest wrote it) | `TestKittyImageNumbers` (standalone and daemon: "an image number reached the host", "image I=7 (40x40) never reached the host") | **caught** |
