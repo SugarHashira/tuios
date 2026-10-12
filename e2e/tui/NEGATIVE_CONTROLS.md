@@ -5125,3 +5125,21 @@ Run on 2026-10-14 on Linux. `TestARightClickCancelsADrag` in `bsp_drop_zone_test
 | Control: what was cut | Test that fails | Verdict |
 | --- | --- | --- |
 | The `o.CancelWindowDrag()` call at the top of `handleMouseClick` in `internal/input/mouse_click.go` | `TestARightClickCancelsADrag` ("after the right click C is not back in its slot"): the right press starts a resize, its release opens the pane menu, and C stays at the pointer over A | **caught** |
+## Move a window to another session
+
+Run on 2026-10-12 on branch `feat/move-window-session`. `TestMoveWindowToSession`
+moves a pane that prints its pid from session alpha to beta with the verb,
+types into it there, and moves it back with the CLI. A real client is
+attached to each session. Each control cuts one call site and rebuilds.
+
+| Control | Build | Where the test fails | Verdict |
+| --- | --- | --- | --- |
+| The PTY is not put in the destination's PTY map (`s.ptys[pty.ID] = pty` cut from `Session.adoptWindow`) | mutant of this branch | "in session beta never showed MOVED-PANE-MARK": capture-pane answers `pty_not_found`, though beta lists the window | **caught** |
+| The `to_session` branch cut from `verbMoveWindow` | mutant of this branch | "a move to the window's own session = invalid_params ... want same_session" | **caught** |
+| The `followMovedWindow` call cut from `admitVerb` | mutant of this branch | "a report naming the old session did not reach the moved pane" | **caught** |
+| `joinPane` in the tmux shim as on `origin/main` (a join across sessions refused) | mutant of this branch | `TestTmuxShimJoinPaneAcrossSessions`: join-pane exits 1 with "tuios moves a pane only within its session" | **caught** |
+| The positive half | this branch | none: the source client draws the pane before the move and not after, the destination client draws its old output and the answer typed after the move, with the same pid, and the refusals are `same_session` and `session_not_found` | **guard** |
+
+The passing run writes `TestMoveWindowToSession.json` (every call and reply)
+and the screens of both clients to `$TUIOS_E2E_FRAMES`. Run it with
+`TUIOS_E2E=1 TUIOS_E2E_BIN=/tmp/tuios TUIOS_E2E_FRAMES=/tmp/frames go test -count=1 -run '^TestMoveWindowToSession$' .`
