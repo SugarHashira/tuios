@@ -2162,8 +2162,8 @@ a binary is over its budget.
 
 | target | size at 62ec9c0c (Go 1.26.6) | before the size cuts (e632e021) | size at the last raise (Go 1.26.9) | budget |
 |---|---|---|---|---|
-| linux/amd64 | 25,182,370 | 26,681,504 | 36,049,058 | 36,080,000 |
-| darwin/arm64 | 23,834,594 | 25,265,154 | 33,941,362 | 33,975,000 |
+| linux/amd64 | 25,182,370 | 26,681,504 | 36,171,938 | 36,200,000 |
+| darwin/arm64 | 23,834,594 | 25,265,154 | 34,043,058 | 34,075,000 |
 
 The first budgets were about 3% above the size they were set at and below the
 size before the size cuts, so undoing those cuts failed the job. Each raise
@@ -2578,6 +2578,13 @@ changed-word marks. On top of the bridge's output path the build measured
 36,049,058 and 33,941,362 bytes on Go 1.26.9, 73,728 and 67,344 more. No
 dependency was added; the highlighting is chroma, which diffview links
 already.
+
+They went on to 36,200,000 and 34,075,000 for search-panes, command-history,
+list-ports and started_by, which the GUI's find bar, command list, ports view
+and pane tree read. On top of review-stage the build measured 36,171,938 and
+34,043,058 bytes on Go 1.26.9, 122,880 and 101,696 more. No dependency was
+added: the ports come from /proc on Linux and lsof on macOS. The ceiling is
+40 MB.
 
 To raise a budget, do it on purpose in its own commit: run
 `scripts/binary-size.sh` on the Go version in go.mod, set the new budget a
