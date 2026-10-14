@@ -2162,8 +2162,8 @@ a binary is over its budget.
 
 | target | size at 62ec9c0c (Go 1.26.6) | before the size cuts (e632e021) | size at the last raise (Go 1.26.9) | budget |
 |---|---|---|---|---|
-| linux/amd64 | 25,182,370 | 26,681,504 | 35,672,226 | 35,570,000 |
-| darwin/arm64 | 23,834,594 | 25,265,154 | 33,564,050 | 33,565,000 |
+| linux/amd64 | 25,182,370 | 26,681,504 | 35,795,106 | 35,830,000 |
+| darwin/arm64 | 23,834,594 | 25,265,154 | 33,738,482 | 33,770,000 |
 
 The first budgets were about 3% above the size they were set at and below the
 size before the size cuts, so undoing those cuts failed the job. Each raise
@@ -2555,6 +2555,15 @@ The budgets went down to 35,570,000 (linux/amd64) and 33,565,000
 (darwin/arm64) after the cold-path sorts, so the bytes they freed are not
 spent unnoticed. Each budget keeps the room it had before the cut, 57,518 and
 102,374 bytes.
+
+The budgets went to 35,830,000 (linux/amd64) and 33,770,000 (darwin/arm64)
+for `tuios gui-bridge`, the process the desktop GUI runs to drive a session:
+the bridge itself (internal/guibridge), the layout edits by pane id, stacks,
+the gui keybinding scope, window kinds, the bounded renderer queue and the
+renderer's snapshots, palette, launcher and hosts. On origin/main at 2b6578f8
+(35,516,578 and 33,462,786 bytes on Go 1.26.9) the branch measured
+35,795,106 and 33,738,482, 278,528 and 275,696 bytes more. No dependency was
+added. The bridge is a subcommand of the one binary, as the SSH server is.
 
 To raise a budget, do it on purpose in its own commit: run
 `scripts/binary-size.sh` on the Go version in go.mod, set the new budget a
