@@ -2162,8 +2162,8 @@ a binary is over its budget.
 
 | target | size at 62ec9c0c (Go 1.26.6) | before the size cuts (e632e021) | size at the last raise (Go 1.26.9) | budget |
 |---|---|---|---|---|
-| linux/amd64 | 25,182,370 | 26,681,504 | 35,795,106 | 35,830,000 |
-| darwin/arm64 | 23,834,594 | 25,265,154 | 33,738,482 | 33,770,000 |
+| linux/amd64 | 25,182,370 | 26,681,504 | 35,971,234 | 36,000,000 |
+| darwin/arm64 | 23,834,594 | 25,265,154 | 33,873,986 | 33,900,000 |
 
 The first budgets were about 3% above the size they were set at and below the
 size before the size cuts, so undoing those cuts failed the job. Each raise
@@ -2564,6 +2564,13 @@ renderer's snapshots, palette, launcher and hosts. On origin/main at 2b6578f8
 (35,516,578 and 33,462,786 bytes on Go 1.26.9) the branch measured
 35,795,106 and 33,738,482, 278,528 and 275,696 bytes more. No dependency was
 added. The bridge is a subcommand of the one binary, as the SSH server is.
+
+They went on to 36,000,000 and 33,900,000 for `file-preview`, the GUI's Quick
+Look, which main had taken out while nothing called it. On top of the bridge
+the build measured 35,971,234 and 33,873,986 bytes on Go 1.26.9, 176,128 and
+135,504 more. The bytes are the verb, the GIF and JPEG decoders from the
+standard library and the scaler. WebP and BMP go to the client as they are,
+so their decoders are not linked.
 
 To raise a budget, do it on purpose in its own commit: run
 `scripts/binary-size.sh` on the Go version in go.mod, set the new budget a
