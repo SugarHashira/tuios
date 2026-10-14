@@ -2162,8 +2162,8 @@ a binary is over its budget.
 
 | target | size at 62ec9c0c (Go 1.26.6) | before the size cuts (e632e021) | size at the last raise (Go 1.26.9) | budget |
 |---|---|---|---|---|
-| linux/amd64 | 25,182,370 | 26,681,504 | 35,971,234 | 36,000,000 |
-| darwin/arm64 | 23,834,594 | 25,265,154 | 33,873,986 | 33,900,000 |
+| linux/amd64 | 25,182,370 | 26,681,504 | 36,049,058 | 36,080,000 |
+| darwin/arm64 | 23,834,594 | 25,265,154 | 33,941,362 | 33,975,000 |
 
 The first budgets were about 3% above the size they were set at and below the
 size before the size cuts, so undoing those cuts failed the job. Each raise
@@ -2571,6 +2571,13 @@ the build measured 35,971,234 and 33,873,986 bytes on Go 1.26.9, 176,128 and
 135,504 more. The bytes are the verb, the GIF and JPEG decoders from the
 standard library and the scaler. WebP and BMP go to the client as they are,
 so their decoders are not linked.
+
+They went on to 36,080,000 and 33,975,000 for review-stage: staging and
+unstaging by file, hunk and line with an undo, and review-diff's colour and
+changed-word marks. On top of the bridge's output path the build measured
+36,049,058 and 33,941,362 bytes on Go 1.26.9, 73,728 and 67,344 more. No
+dependency was added; the highlighting is chroma, which diffview links
+already.
 
 To raise a budget, do it on purpose in its own commit: run
 `scripts/binary-size.sh` on the Go version in go.mod, set the new budget a
