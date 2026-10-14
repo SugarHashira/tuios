@@ -4786,3 +4786,14 @@ Not covered here: the far OS (`os` in `hello`) picks `cmd /C` only for a
 Windows host, which this suite cannot run. The longer pending time and the
 answer to "already has a scratch terminal" need a create whose answer is lost
 on the link, which this suite cannot make on demand.
+
+## A pane names tuios in its XTVERSION answer (tuios.dev/vt preparation)
+
+Run on 2026-10-14 on branch `refactor/vt-terminal-name`. The test is
+`TestPaneXTVERSIONNamesTuios` in `xtversion_name_test.go`. The emulator's own
+name is now `vt`, and `internal/terminal` sets `tuios` at startup.
+
+| Control | Build | Tests that fail | Verdict |
+| --- | --- | --- | --- |
+| `internal/terminal/vt_name.go` removed, so nothing sets the name | mutant of this branch | both subtests: `XTVERSION answered "vt dev", want tuios and the version` | **caught** |
+| The positive half | this branch | none: standalone and daemon panes answer `tuios dev` | **guard** |
