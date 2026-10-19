@@ -354,6 +354,39 @@ type cell struct {
 	vert, horiz bool
 	junction    bool
 	join        joinSide
+	// side is the edge of the pane-area frame the cell lies on, so a plain
+	// segment of it takes the style's glyph for that edge: a half-block
+	// border fills the half of the cell toward the panes, which is a
+	// different half on each of the four sides.
+	side frameSide
+}
+
+// frameSide names the edge of the frame round the pane area that a cell is on.
+// Corners carry none: they are drawn as the junction they are.
+type frameSide uint8
+
+const (
+	frameTop frameSide = 1 << iota
+	frameBottom
+	frameLeft
+	frameRight
+)
+
+// frameEdgeGlyph is the glyph a plain cell of the frame is drawn with, taken
+// from the border style's own glyph for that edge. A stroke style has the same
+// rune on opposite edges, so only the fill styles notice.
+func frameEdgeGlyph(side frameSide, b lipgloss.Border, fallback rune) rune {
+	switch {
+	case side&frameTop != 0:
+		return firstRune(b.Top, fallback)
+	case side&frameBottom != 0:
+		return firstRune(b.Bottom, fallback)
+	case side&frameLeft != 0:
+		return firstRune(b.Left, fallback)
+	case side&frameRight != 0:
+		return firstRune(b.Right, fallback)
+	}
+	return fallback
 }
 
 func (c *cell) isVert() bool  { return c != nil && c.vert }
@@ -377,8 +410,9 @@ func (m *OS) renderSeparatorOverlay() []*lipgloss.Layer {
 	}
 
 	bounds := m.GetBSPBounds()
+	frame := m.sharedFrame()
 	splits, stack := m.dividerLines(bounds)
-	if len(splits) == 0 {
+	if len(splits) == 0 && !frame {
 		return nil
 	}
 
@@ -393,7 +427,7 @@ func (m *OS) renderSeparatorOverlay() []*lipgloss.Layer {
 	// The perimeter of the focused window, clipped to the tiled bounds. Cells on
 	// it are drawn in the focus color, so the focused pane reads as an outlined
 	// rectangle even though every segment is shared with a neighbour.
-	focus := m.focusPerimeter(bounds)
+	focus := m.focusPerimeter(bounds, frame)
 	// The focused perimeter is drawn bold as well as tinted so the signal
 	// survives themes where the two border colors are close, and so it is not
 	// carried by hue alone.
@@ -414,7 +448,7 @@ func (m *OS) renderSeparatorOverlay() []*lipgloss.Layer {
 	// none of them, so a frame that matches the last one reuses its layers.
 	key := separatorKey{
 		bounds: bounds, viewW: viewW, viewH: viewH,
-		rules: rules, border: border, focus: focus,
+		rules: rules, border: border, focus: focus, frame: frame,
 		unfocused: unfocusedStr, focused: focusedStr,
 	}
 	if memo := &m.separatorMemo; memo.valid && memo.key == key &&
@@ -436,6 +470,7 @@ type separatorKey struct {
 	rules              chromeRules
 	border             lipgloss.Border
 	focus              borderPerimeter
+	frame              bool
 	unfocused, focused string
 }
 
@@ -531,8 +566,44 @@ func (m *OS) buildSeparatorLayers(splits []dividerLine, stack []paneLayer, key s
 		}
 	}
 
+	// The frame round the pane area: the cells the layout reserved outside the
+	// panes, drawn as the outer edge of the same grid the dividers are in. A
+	// divider that runs into it meets it as a tee through the neighbour probes
+	// below, the way it meets another divider.
+	if key.frame {
+		x0, x1 := bounds.X-1, bounds.X+bounds.W
+		y0, y1 := bounds.Y-1, bounds.Y+bounds.H
+		inView := func(x, y int) bool { return x >= 0 && x < viewW && y >= 0 && y < viewH }
+		for y := bounds.Y; y < bounds.Y+bounds.H; y++ {
+			if inView(x0, y) {
+				c := get(x0, y)
+				c.vert, c.side = true, c.side|frameLeft
+			}
+			if inView(x1, y) {
+				c := get(x1, y)
+				c.vert, c.side = true, c.side|frameRight
+			}
+		}
+		for x := bounds.X; x < bounds.X+bounds.W; x++ {
+			if inView(x, y0) {
+				c := get(x, y0)
+				c.horiz, c.side = true, c.side|frameTop
+			}
+			if inView(x, y1) {
+				c := get(x, y1)
+				c.horiz, c.side = true, c.side|frameBottom
+			}
+		}
+		for _, p := range [][2]int{{x0, y0}, {x1, y0}, {x0, y1}, {x1, y1}} {
+			if inView(p[0], p[1]) {
+				get(p[0], p[1]).junction = true
+			}
+		}
+	}
+
 	// Get border characters from the configured style
 	g := dividerGlyphs(border)
+	fill := !m.Settings.BorderJoinsChromeRules()
 	chVert, chHoriz := g.vert, g.horiz
 	chCross, chTRight, chTLeft := g.cross, g.tRight, g.tLeft
 	chTDown, chTUp := g.tDown, g.tUp
@@ -604,6 +675,12 @@ func (m *OS) buildSeparatorLayers(splits []dividerLine, stack []paneLayer, key s
 		default:
 			continue
 		}
+		// A fill style has no tee to meet the frame with: its cells already touch
+		// along the edge they share, so a divider ending on the frame leaves the
+		// frame's own glyph in place. A tee glyph there would notch the line.
+		if c.side != 0 && (fill || ch == chVert || ch == chHoriz) {
+			ch = frameEdgeGlyph(c.side, border, ch)
+		}
 
 		onFocus := focus.contains(x, y)
 		// At a corner of the focused perimeter, bend the line into the focused
@@ -612,7 +689,10 @@ func (m *OS) buildSeparatorLayers(splits []dividerLine, stack []paneLayer, key s
 		// hooks toward whichever side owns it. Plain segments and the meeting
 		// with a chrome rule are replaced, both being places the perimeter turns;
 		// a crossing between two dividers keeps the arms its neighbours need.
-		if onFocus && (ch == chVert || ch == chHoriz || c.join != joinNone) {
+		// A divider meeting the frame is the same kind of place as one meeting a
+		// chrome rule: the ring turns there. A fill style keeps the frame's own
+		// glyph, which already reads as one line across the meeting.
+		if onFocus && (ch == chVert || ch == chHoriz || c.join != joinNone || (c.side != 0 && !fill)) {
 			if corner, ok := focus.corner(x, y, border); ok {
 				ch = corner
 			}
@@ -820,10 +900,17 @@ func (p borderPerimeter) corner(x, y int, border lipgloss.Border) (rune, bool) {
 // focusPerimeter returns the perimeter ring of the focused tiled window. It
 // reports ok false when nothing tiled is focused, in which case every separator
 // keeps the unfocused styling.
-func (m *OS) focusPerimeter(bounds layout.Rect) borderPerimeter {
+func (m *OS) focusPerimeter(bounds layout.Rect, frame bool) borderPerimeter {
 	win := m.GetFocusedWindow()
 	if win == nil || !win.Tiled || win.Minimized || win.IsFloating || win.Width <= 0 || win.Height <= 0 {
 		return borderPerimeter{}
+	}
+	// With the frame drawn the ring may run one cell further out, onto the
+	// frame, and that cell is the pane area's own edge rather than the
+	// sidebar's rule, so the corner is capped there.
+	out := 0
+	if frame {
+		out = 1
 	}
 	return borderPerimeter{
 		ok:     true,
@@ -832,13 +919,13 @@ func (m *OS) focusPerimeter(bounds layout.Rect) borderPerimeter {
 		top:    win.Y - 1,
 		bottom: win.Y + win.Height,
 
-		clipLeft:   max(win.X-1, bounds.X),
-		clipRight:  min(win.X+win.Width, bounds.X+bounds.W-1),
-		clipTop:    max(win.Y-1, bounds.Y),
-		clipBottom: min(win.Y+win.Height, bounds.Y+bounds.H-1),
+		clipLeft:   max(win.X-1, bounds.X-out),
+		clipRight:  min(win.X+win.Width, bounds.X+bounds.W-1+out),
+		clipTop:    max(win.Y-1, bounds.Y-out),
+		clipBottom: min(win.Y+win.Height, bounds.Y+bounds.H-1+out),
 
-		capLeft:  m.PaneLeft() == 0 || win.X-1 >= bounds.X,
-		capRight: m.GetRightMargin() == 0 || win.X+win.Width < bounds.X+bounds.W,
+		capLeft:  frame || m.PaneLeft() == 0 || win.X-1 >= bounds.X,
+		capRight: frame || m.GetRightMargin() == 0 || win.X+win.Width < bounds.X+bounds.W,
 	}
 }
 

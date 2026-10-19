@@ -75,6 +75,11 @@ one more row. It works with the dock at the top and at the bottom.
 no border and no title bar. The pane's program gets the full size. With it on,
 `zoom_size` and `zoom_max_width` have no effect.
 
+`appearance.shared_borders_frame` draws a border round the whole pane area when
+`shared_borders` is on, so the outer edges are framed like the dividers. It
+takes one cell on every side of the pane area, so the panes get two columns
+and two rows less. It does nothing while `shared_borders` is off.
+
 `appearance.dock_mode_icon_window`, `dock_mode_icon_terminal` and
 `dock_mode_icon_tiling` set the icon in the dock's mode pill. An empty value
 shows no icon, and `default` puts back the icon of the glyph set. An icon can

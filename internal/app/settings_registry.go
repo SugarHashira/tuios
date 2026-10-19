@@ -140,6 +140,7 @@ var settingLabels = map[string]string{
 	"appearance.theme_transition":               "Theme transition",
 	"appearance.theme_transition_duration":      "Theme transition time (ms)",
 	"appearance.zoom_borderless":                "Borderless zoom",
+	"appearance.shared_borders_frame":           "Frame round shared borders",
 	"appearance.zoom_follows_focus":             "Zoom follows focus",
 	"appearance.window_button_zoom":             "Tiled zoom button",
 	"appearance.zoom_max_width":                 "Zoom width",

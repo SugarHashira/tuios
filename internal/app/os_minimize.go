@@ -278,7 +278,14 @@ func (m *OS) zoomRect() (x, y, w, h int) {
 	if !m.Settings.ZoomBorderless && m.Settings.ZoomMaxWidth > 0 && m.Settings.ZoomMaxWidth < contentWidth {
 		zoomWidth = m.Settings.ZoomMaxWidth
 	}
-	return leftMargin + (contentWidth-zoomWidth)/2, topMargin, zoomWidth, m.PaneHeight()
+	x, y, w, h = leftMargin+(contentWidth-zoomWidth)/2, topMargin, zoomWidth, m.PaneHeight()
+	// A zoom of the whole region covers the frame round it as well, so a
+	// fullscreen pane does not sit in a ring of empty ground. A capped zoom
+	// floats in the middle and leaves the frame where it is.
+	if m.sharedFrame() && zoomWidth == contentWidth {
+		x, y, w, h = x-1, y-1, w+2, h+2
+	}
+	return x, y, w, h
 }
 
 // applyZoomRect puts a zoomed pane in this client's zoom box and tells its

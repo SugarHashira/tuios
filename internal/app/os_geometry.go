@@ -494,6 +494,14 @@ func (m *OS) OwnLayoutReserve() session.LayoutReserve {
 	default:
 		r.Bottom = m.Settings.DockHeight()
 	}
+	// The frame round the pane area is one cell of chrome on every side, so the
+	// panes are laid out inside it and the guests are sized without it.
+	if m.sharedFrame() {
+		r.Left++
+		r.Right++
+		r.Top++
+		r.Bottom++
+	}
 	return r
 }
 

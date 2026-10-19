@@ -30,6 +30,16 @@ func (m *OS) panesBorderless() bool {
 // border to drag.
 func (m *OS) PanesBorderless() bool { return m.panesBorderless() }
 
+// sharedFrame reports whether the shared dividers are closed by a border round
+// the whole pane area. It is a per-client chrome choice, like the dock, so it
+// reads this client's setting and reaches the other clients through the layout
+// reserve (OwnLayoutReserve) rather than through the session's pane geometry.
+// Without shared borders there are no dividers to close: every pane draws its
+// own box and already has its own outer edge.
+func (m *OS) sharedFrame() bool {
+	return m.Settings.SharedBordersFrame && m.panesBorderless()
+}
+
 // separatorGap is the columns the layout keeps between two neighbouring panes.
 //
 // Borderless panes need one whatever the user asked for: their rectangles are

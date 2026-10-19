@@ -1158,6 +1158,30 @@ border back. You can also set it on the settings page, in the Advanced section,
 or with `tuios set-config appearance.zoom_borderless true`. The change applies
 at once.
 
+## A frame round shared borders
+
+With `appearance.shared_borders` on, panes draw one divider between them and
+nothing on the outer edges. `appearance.shared_borders_frame` also draws a
+border round the whole pane area, so the outer edges are framed in the same
+style as the dividers. The default is `false`.
+
+```toml
+[appearance]
+shared_borders = true
+shared_borders_frame = true
+```
+
+The frame takes one cell on every side of the pane area, reserved the way the
+dock is, so the panes and the programs in them are one column narrower on each
+side and two rows shorter. The side of the frame that touches the focused pane
+is drawn in the focus colour. A divider that runs into the frame meets it as a
+tee. A zoom of the whole region covers the frame as well.
+
+The option does nothing while `shared_borders` is off, because every pane
+then draws its own border. You can also set it on the settings page, or with
+`tuios set-config appearance.shared_borders_frame true`. The change applies at
+once.
+
 ## Splits that follow ssh
 
 The actions `split_ssh_horizontal`, `split_ssh_vertical` and `new_window_ssh`

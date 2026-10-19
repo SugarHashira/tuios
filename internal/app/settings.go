@@ -404,6 +404,7 @@ func (m *OS) settingsCategories() []settingsCategory {
 			// Hand-written: the value in force is the session's pane geometry,
 			// not this client's config. See sharedBordersItem.
 			custom("appearance.shared_borders", m.sharedBordersItem()),
+			opt("appearance.shared_borders_frame"),
 			opt("appearance.hide_window_buttons"),
 			opt("appearance.window_button_style"),
 			opt("appearance.window_button_position"),

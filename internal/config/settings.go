@@ -118,6 +118,13 @@ type Settings struct {
 	// Default: false (disabled, opt-in)
 	SharedBorders bool
 
+	// SharedBordersFrame draws a border around the whole pane area when shared
+	// borders are on, so the outer edges are framed like the divider between two
+	// panes. The frame takes one cell on every side of the pane area, reserved
+	// through the layout reserve like the dock. Set via
+	// appearance.shared_borders_frame. Default: false.
+	SharedBordersFrame bool
+
 	// BorderStyle controls which border style to use for windows
 	// Set via --border-style flag or appearance.border_style config
 	BorderStyle string

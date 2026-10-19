@@ -365,6 +365,11 @@ var optionSpecs = []Option{
 		Default:     "false",
 	},
 	{
+		Path: "appearance.shared_borders_frame", Type: OptionBool, Section: "appearance",
+		Description: "With shared borders on, also draw a border around the whole pane area. The panes lose one cell on every side to it. Has no effect without shared_borders.",
+		Default:     "false",
+	},
+	{
 		Path: "appearance.border_focused_color", Type: OptionString, Section: "appearance",
 		Description: "Colour overriding the focused pane's border: #89b4fa, a slot name such as bright_cyan, or a role such as accent",
 		Default:     "", Color: true,

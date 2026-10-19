@@ -370,6 +370,7 @@ type AppearanceConfig struct {
 	Theme                    string                  `toml:"theme"`                        // Color theme name (e.g., dracula, nord, my-custom-theme)
 	ThemeLight               string                  `toml:"theme_light"`                  // Theme while the terminal is light; theme is then the dark one (default: empty, theme for both)
 	SharedBorders            *bool                   `toml:"shared_borders"`               // Share borders between adjacent tiled windows (default: false)
+	SharedBordersFrame       bool                    `toml:"shared_borders_frame"`         // Frame the whole pane area when shared borders are on (default: false)
 	// Customization
 	BorderFocusedColor string `toml:"border_focused_color"` // Hex color for focused pane border (e.g., "#89b4fa")
 	// BorderFocusedGradient is two or more colours the focused border steps
@@ -2789,6 +2790,7 @@ func ApplyAppearanceConfig(cfg *UserConfig, s *Settings) {
 	if cfg.Appearance.SharedBorders != nil {
 		s.SharedBorders = *cfg.Appearance.SharedBorders
 	}
+	s.SharedBordersFrame = cfg.Appearance.SharedBordersFrame
 
 	// WhichKeyEnabled defaults to true (nil means use default)
 	if cfg.Appearance.WhichKeyEnabled != nil {
